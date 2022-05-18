@@ -355,7 +355,6 @@ function installCaddyTLS() {
     read -r -p '请输入Caddy的转发端口(用于申请证书,默认:8863): ' caddy_remote_port
     [ -z "${caddy_remote_port}" ] && caddy_remote_port=8863
 
-    echoContent yellow "注意: 请确保域名已经解析到本机IP"
     while read -r -p '请输入你的域名(必填): ' domain; do
       if [[ -z ${domain} ]]; then
         echoContent red "域名不能为空"
@@ -366,15 +365,15 @@ function installCaddyTLS() {
 
     mkdir "${CADDY_ACME}${domain}"
 
-    ping -c 2 -w 5 "${domain}"
-    if [[ $? -ne 0 ]]; then
-      echoContent yellow "你的域名没有解析到本机IP,请稍后再试"
-      echoContent red "---> Caddy安装失败"
-      exit 0
-    fi
-
     while read -r -p '请选择设置证书的方式?(1/自动申请和续签证书 2/手动设置证书路径 默认:1/自动申请和续签证书): ' ssl_option; do
       if [ -z "${ssl_option}" ] || [ "${ssl_option}" = 1 ]; then
+
+        ping -c 2 -w 5 "${domain}"
+        if [[ $? -ne 0 ]]; then
+          echoContent yellow "你的域名没有解析到本机IP,请稍后再试"
+          echoContent red "---> Caddy安装失败"
+          exit 0
+        fi
 
         read -r -p '请输入你的邮箱(用于申请证书,默认:123456@qq.com): ' your_email
         [ -z "${your_email}" ] && your_email="123456@qq.com"
