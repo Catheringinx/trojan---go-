@@ -28,7 +28,7 @@ apt install -y wget;wget --no-check-certificate -O install_script.sh https://git
 4. 节点类型支持多协议，例如: trojan-go、hysteria
 5. 支持数据库版节点集群和单机版节点
 
-# Document
+# Documentation
 
 [Wiki](https://github.com/trojanpanel/install-script/wiki)
 
@@ -50,3 +50,7 @@ apt install -y wget;wget --no-check-certificate -O install_script.sh https://git
 # License
 
 [GPL-3.0](./LICENSE)
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/trojanpanel/install-script.svg)](https://github.com/trojanpanel/install-script)
