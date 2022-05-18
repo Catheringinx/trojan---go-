@@ -47,7 +47,6 @@ echoContent() {
 
 initVar() {
   echoType='echo -e'
-  ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
   # 系统
   release=
