@@ -2,7 +2,7 @@
 
 支持多协议的可视化管理面板
 
-# Installation
+# Quick installation
 
 For CentOS 6+:
 
@@ -28,7 +28,7 @@ apt install -y wget;wget --no-check-certificate -O install_script.sh https://git
 4. 节点类型支持多协议，例如: trojan-go、hysteria
 5. 支持数据库版节点集群和单机版节点
 
-# Documentation
+# Document
 
 [Wiki](https://github.com/trojanpanel/install-script/wiki)
 
@@ -36,12 +36,17 @@ apt install -y wget;wget --no-check-certificate -O install_script.sh https://git
 
 [Issues](https://github.com/trojanpanel/install-script/issues)
 
-# Discuss
+# Community
 
-Telegram: [Trojan Panel交流群](https://t.me/TrojanPanelGroup)
+- Telegram Channel: [Trojan Panel](https://t.me/TrojanPanel)
+- Telegram Group: [Trojan Panel交流群](https://t.me/TrojanPanelGroup)
 
 # Thanks
 
 - [trojan-gfw](https://github.com/trojan-gfw/trojan)
 - [trojan-go](https://github.com/p4gefau1t/trojan-go)
 - [hysteria](https://github.com/HyNetwork/hysteria)
+
+# License
+
+[GPL-3.0](./LICENSE)
