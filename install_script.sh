@@ -128,6 +128,8 @@ initVar() {
   hysteria_port=443
   hysteria_password=''
   hysteria_protocol='udp'
+  hysteria_up_mbps=100
+  hysteria_down_mbps=100
   trojan_panel_url=''
 }
 
@@ -1258,6 +1260,10 @@ function installHysteria(){
     esac
     read -r -p '请输入Hysteria的端口(默认:443): ' hysteria_port
     [ -z "${hysteria_port}" ] && hysteria_port=443
+    read -r -p '请输入单客户端最大上传速度/Mbps(默认:100): ' hysteria_up_mbps
+    [ -z "${hysteria_up_mbps}" ] && hysteria_up_mbps=100
+    read -r -p '请输入单客户端最大下载速度/Mbps(默认:100): ' hysteria_down_mbps
+    [ -z "${hysteria_down_mbps}" ] && hysteria_down_mbps=100
     read -r -p '请输入Trojan Panel的地址(默认:本机): ' trojan_panel_url
     [ -z "${trojan_panel_url}" ] && trojan_panel_url=${domain}
 
@@ -1267,6 +1273,8 @@ function installHysteria(){
   "protocol": "${hysteria_protocol}",
   "cert": "${CADDY_ACME}${domain}/${domain}.crt",
   "key": "${CADDY_ACME}${domain}/${domain}.key",
+  "up_mbps": ${hysteria_up_mbps},
+  "down_mbps": ${hysteria_down_mbps},
   "auth": {
     "mode": "external",
     "config": {
@@ -1323,6 +1331,10 @@ function installHysteriaStandalone(){
     esac
     read -r -p '请输入Hysteria的端口(默认:443): ' hysteria_port
     [ -z "${hysteria_port}" ] && hysteria_port=443
+    read -r -p '请输入单客户端最大上传速度/Mbps(默认:100): ' hysteria_up_mbps
+    [ -z "${hysteria_up_mbps}" ] && hysteria_up_mbps=100
+    read -r -p '请输入单客户端最大下载速度/Mbps(默认:100): ' hysteria_down_mbps
+    [ -z "${hysteria_down_mbps}" ] && hysteria_down_mbps=100
     while read -r -p '请输入Hysteria的密码(必填): ' hysteria_password; do
       if [[ -z ${hysteria_password} ]]; then
         echoContent red "密码不能为空"
@@ -1337,6 +1349,8 @@ function installHysteriaStandalone(){
   "protocol": "${hysteria_protocol}",
   "cert": "${CADDY_ACME}${domain}/${domain}.crt",
   "key": "${CADDY_ACME}${domain}/${domain}.key",
+  "up_mbps": ${hysteria_up_mbps},
+  "down_mbps": ${hysteria_down_mbps},
   "obfs": "${hysteria_password}"
 }
 EOF
