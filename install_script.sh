@@ -51,9 +51,12 @@ initVar() {
   # 系统
   release=
   # CentOS版本
-  centosVersion=
+  centos_version=
   # Debian版本
-  debianVersion=
+  debian_version=
+
+  # Docker
+  docker_mirror='http://hub-mirror.c.163.com'
 
   # 项目目录
   TP_DATA='/tpdata/'
@@ -189,15 +192,15 @@ function canVisit(){
 function checkSystem() {
   if [[ -n $(find /etc -name "redhat-release") ]] || grep </proc/version -q -i "centos"; then
     # 检测系统版本号
-    centosVersion=$(rpm -q centos-release | awk -F "[-]" '{print $3}' | awk -F "[.]" '{print $1}')
-    if [[ -z "${centosVersion}" ]] && grep </etc/centos-release "release 8"; then
-      centosVersion=8
+    centos_version=$(rpm -q centos-release | awk -F "[-]" '{print $3}' | awk -F "[.]" '{print $1}')
+    if [[ -z "${centos_version}" ]] && grep </etc/centos-release "release 8"; then
+      centos_version=8
     fi
     release="centos"
 
   elif grep </etc/issue -q -i "debian" && [[ -f "/etc/issue" ]] || grep </etc/issue -q -i "debian" && [[ -f "/proc/version" ]]; then
     if grep </etc/issue -i "8"; then
-      debianVersion=8
+      debian_version=8
     fi
     release="debian"
 
@@ -345,7 +348,7 @@ function installDocker() {
     mkdir -p /etc/docker
     cat >/etc/docker/daemon.json <<EOF
 {
- "registry-mirrors":["http://hub-mirror.c.163.com"]
+ "registry-mirrors":["${docker_mirror}"]
 }
 EOF
     fi
