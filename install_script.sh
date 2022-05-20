@@ -177,6 +177,15 @@ function mkdirTools() {
   touch ${HYSTERIA_STANDALONE_CONFIG}
 }
 
+function canVisit(){
+    ping -c2 -i0.3 -W1 $1 &>/dev/null
+    if [ $? -ne 0 ];then
+        return 1
+    else
+        return 0
+    fi
+}
+
 function checkSystem() {
   if [[ -n $(find /etc -name "redhat-release") ]] || grep </proc/version -q -i "centos"; then
     # 检测系统版本号
@@ -327,7 +336,19 @@ function installDocker() {
       exit 0
     fi
 
+    # 时区
     timedatectl set-timezone Asia/Shanghai
+
+    canVisit www.google.com
+    if [[ $? -ne 0 ]]; then
+    # 设置Docker国内源
+    mkdir -p /etc/docker
+    cat >/etc/docker/daemon.json <<EOF
+{
+ "registry-mirrors":["http://hub-mirror.c.163.com"]
+}
+EOF
+    fi
 
     systemctl enable docker
     systemctl start docker && docker -v && docker network create trojan-panel-network
@@ -370,8 +391,10 @@ function installCaddyTLS() {
     while read -r -p '请选择设置证书的方式?(1/自动申请和续签证书 2/手动设置证书路径 默认:1/自动申请和续签证书): ' ssl_option; do
       if [ -z "${ssl_option}" ] || [ "${ssl_option}" = 1 ]; then
 
-        ping -c 2 -w 5 "${domain}"
-        if [[ $? -ne 0 ]]; then
+        echoContent yellow "正在检测域名,请稍后..."
+        ping_ip=$(ping "${domain}" -s1 -c1 | grep "${domain}" | head -n1 | cut -d'(' -f2 | cut -d')' -f1)
+        curl_ip=$(curl ifconfig.me)
+        if [[ "${ping_ip}" != "${curl_ip}" ]]; then
           echoContent yellow "你的域名没有解析到本机IP,请稍后再试"
           echoContent red "---> Caddy安装失败"
           exit 0
