@@ -181,11 +181,7 @@ function mkdirTools() {
 
 function canVisit(){
     ping -c2 -i0.3 -W1 $1 &>/dev/null
-    if [ $? -ne 0 ];then
-        return 1
-    else
-        return 0
-    fi
+    return $?
 }
 
 function checkSystem() {
@@ -322,7 +318,9 @@ function installDockerUbuntu(){
 
 # 安装Docker
 function installDocker() {
-  systemctl stop firewalld.service && systemctl disable firewalld.service
+  if [[ "$(firewall-cmd --state)" == "running" ]]; then
+      systemctl stop firewalld.service && systemctl disable firewalld.service
+  fi
 
   if [[ ! $(docker -v 2>/dev/null) ]]; then
     echoContent green "---> 安装Docker"
@@ -342,7 +340,7 @@ function installDocker() {
     timedatectl set-timezone Asia/Shanghai
 
     canVisit www.google.com
-    if [[ $? -ne 0 ]]; then
+    if [[ "$?" == "1" ]]; then
     # 设置Docker国内源
     mkdir -p /etc/docker
     cat >/etc/docker/daemon.json <<EOF
