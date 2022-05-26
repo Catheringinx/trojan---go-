@@ -2,50 +2,14 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-#=================================================================#
-#   System Required: CentOS 6+, Debian8+, Ubuntu16+               #
-#   Version: v1.0.0                                               #
-#   Description: One click Install Trojan Panel server            #
-#   Author: jonssonyan <https://jonssonyan.com>                   #
-#   Github: https://github.com/trojanpanel/install-script         #
-#=================================================================#
+# System Required: CentOS 6+, Debian8+, Ubuntu16+
+# Version: v1.0.0
+# Description: One click Install Trojan Panel server
+# Author: jonssonyan <https://jonssonyan.com>
+# Github: https://github.com/trojanpanel/install-script
 
-echoContent() {
-  case $1 in
-  # 红色
-  "red")
-    # shellcheck disable=SC2154
-    ${echoType} "\033[31m$2\033[0m"
-    ;;
-    # 绿色
-  "green")
-    ${echoType} "\033[32m$2\033[0m"
-    ;;
-    # 黄色
-  "yellow")
-    ${echoType} "\033[33m$2\033[0m"
-    ;;
-    # 蓝色
-  "blue")
-    ${echoType} "\033[34m$2\033[0m"
-    ;;
-    # 紫色
-  "purple")
-    ${echoType} "\033[35m$2\033[0m"
-    ;;
-    # 天蓝色
-  "skyBlue")
-    ${echoType} "\033[36m$2\033[0m"
-    ;;
-    # 白色
-  "white")
-    ${echoType} "\033[37m$2\033[0m"
-    ;;
-  esac
-}
-
-initVar() {
-  echoType="echo -e"
+init_var() {
+  echo_type="echo -e"
 
   # 系统
   release=
@@ -135,7 +99,33 @@ initVar() {
   trojan_panel_url=""
 }
 
-function mkdirTools() {
+echo_content() {
+  case $1 in
+  "red")
+    ${echo_type} "\033[31m$2\033[0m"
+    ;;
+  "green")
+    ${echo_type} "\033[32m$2\033[0m"
+    ;;
+  "yellow")
+    ${echo_type} "\033[33m$2\033[0m"
+    ;;
+  "blue")
+    ${echo_type} "\033[34m$2\033[0m"
+    ;;
+  "purple")
+    ${echo_type} "\033[35m$2\033[0m"
+    ;;
+  "skyBlue")
+    ${echo_type} "\033[36m$2\033[0m"
+    ;;
+  "white")
+    ${echo_type} "\033[37m$2\033[0m"
+    ;;
+  esac
+}
+
+function mkdir_tools() {
   # 项目目录
   mkdir -p ${TP_DATA}
 
@@ -179,14 +169,13 @@ function mkdirTools() {
   touch ${HYSTERIA_STANDALONE_CONFIG}
 }
 
-function canVisit(){
+function can_visit(){
     ping -c2 -i0.3 -W1 $1 &>/dev/null
     return $?
 }
 
-function checkSystem() {
+function check_sys() {
   if [[ -n $(find /etc -name "redhat-release") ]] || grep </proc/version -q -i "centos"; then
-    # 检测系统版本号
     centos_version=$(rpm -q centos-release | awk -F "[-]" '{print $3}' | awk -F "[.]" '{print $1}')
     if [[ -z "${centos_version}" ]] && grep </etc/centos-release "release 8"; then
       centos_version=8
@@ -204,35 +193,35 @@ function checkSystem() {
   fi
 
   if [[ -z "${release}" ]]; then
-    echoContent red "暂不支持该系统"
+    echo_content red "暂不支持该系统"
     exit 0
   fi
 }
 
 # 安装BBRPlus 仅支持CentOS系统
-function installBBRPlus() {
+function install_bbr_plus() {
   kernel_version="4.14.129-bbrplus"
   if [[ ! -f /etc/redhat-release ]]; then
-    echoContent yellow "仅支持CentOS系统"
+    echo_content yellow "仅支持CentOS系统"
     exit 0
   fi
 
   if [[ "$(uname -r)" == "${kernel_version}" ]]; then
-    echoContent yellow "内核已经安装，无需重复执行"
+    echo_content yellow "内核已经安装，无需重复执行"
     exit 0
   fi
 
   # 卸载原加速
-  echoContent green "卸载加速..."
+  echo_content green "卸载加速..."
   sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
   sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
   if [[ -e /appex/bin/serverSpeeder.sh ]]; then
     wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/0oVicero0/serverSpeeder_Install/master/appex.sh && chmod +x appex.sh && bash appex.sh uninstall
     rm -f appex.sh
   fi
-  echoContent green "下载内核..."
+  echo_content green "下载内核..."
   wget https://github.com/cx9208/bbrplus/raw/master/centos7/x86_64/kernel-${kernel_version}.rpm
-  echoContent green "安装内核..."
+  echo_content green "安装内核..."
   yum install -y kernel-${kernel_version}.rpm
 
   # 检查内核是否安装成功
@@ -240,13 +229,13 @@ function installBBRPlus() {
   target="CentOS Linux (${kernel_version})"
   result=$(echo "${list}" | grep "${target}")
   if [[ -z "${result}" ]]; then
-    echoContent red "内核安装失败"
+    echo_content red "内核安装失败"
     exit 1
   fi
 
-  echoContent green "切换内核..."
+  echo_content green "切换内核..."
   grub2-set-default "CentOS Linux (${kernel_version}) 7 (Core)"
-  echoContent green "启用模块..."
+  echo_content green "启用模块..."
   echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
   echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
   rm -f kernel-${kernel_version}.rpm
@@ -254,12 +243,12 @@ function installBBRPlus() {
   read -r -p "BBRPlusPlus安装完成，现在重启 ? [Y/n] :" yn
   [ -z "${yn}" ] && yn="y"
   if [[ $yn == [Yy] ]]; then
-    echoContent green "重启中..."
+    echo_content green "重启中..."
     reboot
   fi
 }
 
-function installDockerCentOS(){
+function install_dockerCentOS(){
   yum remove docker \
                   docker-client \
                   docker-client-latest \
@@ -278,7 +267,7 @@ function installDockerCentOS(){
   yum install -y docker-ce docker-ce-cli containerd.io
 }
 
-function installDockerDebian(){
+function install_dockerDebian(){
   apt remove docker docker-engine docker.io containerd runc
   apt -y update
   apt -y install \
@@ -297,7 +286,7 @@ function installDockerDebian(){
   apt -y install docker-ce docker-ce-cli containerd.io
 }
 
-function installDockerUbuntu(){
+function install_dockerUbuntu(){
   apt remove docker docker-engine docker.io containerd runc
   apt -y update
   apt -y install \
@@ -317,29 +306,29 @@ function installDockerUbuntu(){
 }
 
 # 安装Docker
-function installDocker() {
+function install_docker() {
   if [[ "$(firewall-cmd --state)" == "running" ]]; then
       systemctl stop firewalld.service && systemctl disable firewalld.service
   fi
 
   if [[ ! $(docker -v 2>/dev/null) ]]; then
-    echoContent green "---> 安装Docker"
+    echo_content green "---> 安装Docker"
 
     if [[ ${release} == "centos" ]]; then
-      installDockerCentOS
+      install_dockerCentOS
     elif [[ ${release} == "debian" ]]; then
-      installDockerDebian
+      install_dockerDebian
     elif [[ ${release} == "ubuntu" ]]; then
-      installDockerUbuntu
+      install_dockerUbuntu
     else
-      echoContent red "---> 暂不支持该系统"
+      echo_content red "---> 暂不支持该系统"
       exit 0
     fi
 
     # 时区
     timedatectl set-timezone Asia/Shanghai
 
-    canVisit www.google.com
+    can_visit www.google.com
     if [[ "$?" == "1" ]]; then
     # 设置Docker国内源
     mkdir -p /etc/docker
@@ -354,23 +343,23 @@ EOF
     systemctl start docker && docker -v && docker network create trojan-panel-network
 
     if [[ -n $(docker -v) ]]; then
-      echoContent skyBlue "---> Docker安装完成"
+      echo_content skyBlue "---> Docker安装完成"
     else
-      echoContent red "---> Docker安装失败"
+      echo_content red "---> Docker安装失败"
       exit 0
     fi
   else
     if [[ -z $(docker network ls | grep "trojan-panel-network") ]]; then
       docker network create trojan-panel-network
     fi
-    echoContent skyBlue "---> 你已经安装了Docker"
+    echo_content skyBlue "---> 你已经安装了Docker"
   fi
 }
 
 # 安装Caddy TLS
-function installCaddyTLS() {
+function install_caddy_tls() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-caddy$") ]]; then
-    echoContent green "---> 安装Caddy TLS"
+    echo_content green "---> 安装Caddy TLS"
 
     wget --no-check-certificate -O ${CADDY_DATA}html.tar.gz ${static_html} \
     && tar -zxvf ${CADDY_DATA}html.tar.gz -C ${CADDY_SRV}
@@ -380,7 +369,7 @@ function installCaddyTLS() {
 
     while read -r -p "请输入你的域名(必填): " domain; do
       if [[ -z ${domain} ]]; then
-        echoContent red "域名不能为空"
+        echo_content red "域名不能为空"
       else
         break
       fi
@@ -391,12 +380,12 @@ function installCaddyTLS() {
     while read -r -p "请选择设置证书的方式?(1/自动申请和续签证书 2/手动设置证书路径 默认:1/自动申请和续签证书): " ssl_option; do
       if [ -z "${ssl_option}" ] || [ "${ssl_option}" = 1 ]; then
 
-        echoContent yellow "正在检测域名,请稍后..."
+        echo_content yellow "正在检测域名,请稍后..."
         ping_ip=$(ping "${domain}" -s1 -c1 | grep "${domain}" | head -n1 | cut -d"(" -f2 | cut -d")" -f1)
         curl_ip=$(curl ifconfig.me)
         if [[ "${ping_ip}" != "${curl_ip}" ]]; then
-          echoContent yellow "你的域名没有解析到本机IP,请稍后再试"
-          echoContent red "---> Caddy安装失败"
+          echo_content yellow "你的域名没有解析到本机IP,请稍后再试"
+          echo_content red "---> Caddy安装失败"
           exit 0
         fi
 
@@ -416,15 +405,15 @@ EOF
           break
       else
         if [[ ${ssl_option} != 2 ]]; then
-          echoContent red "不可以输入除1和2之外的其他字符"
+          echo_content red "不可以输入除1和2之外的其他字符"
         else
 
           while read -r -p "请输入证书的.crt文件路径(必填): " crt_path; do
             if [[ -z "${crt_path}" ]]; then
-              echoContent red "路径不能为空"
+              echo_content red "路径不能为空"
             else
               if [[ ! -f ${crt_path} ]];then
-                echoContent red "证书的.crt文件路径不存在"
+                echo_content red "证书的.crt文件路径不存在"
               else
                 cp "${crt_path}" "${CADDY_ACME}${domain}/${domain}.crt"
                 break
@@ -434,10 +423,10 @@ EOF
 
           while read -r -p "请输入证书的.key文件路径(必填): " key_path; do
             if [[ -z ${key_path} ]]; then
-              echoContent red "路径不能为空"
+              echo_content red "路径不能为空"
             else
               if [[ ! -f ${key_path} ]];then
-                echoContent red "证书的.key文件路径不存在"
+                echo_content red "证书的.key文件路径不存在"
               else
                 cp "${key_path}" "${CADDY_ACME}${domain}/${domain}.key"
                 break
@@ -473,21 +462,21 @@ EOF
       cat >${DOMAIN_FILE} <<EOF
 ${domain}
 EOF
-      echoContent skyBlue "---> Caddy安装完成"
+      echo_content skyBlue "---> Caddy安装完成"
     else
-      echoContent red "---> Caddy安装失败"
+      echo_content red "---> Caddy安装失败"
       exit 0
     fi
   else
     domain=$(cat ${DOMAIN_FILE})
-    echoContent skyBlue "---> 你已经安装了Caddy"
+    echo_content skyBlue "---> 你已经安装了Caddy"
   fi
 }
 
 # 安装MariaDB
-function installMariadb() {
+function install_mariadb() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-mariadb$") ]]; then
-    echoContent green "---> 安装MariaDB"
+    echo_content green "---> 安装MariaDB"
 
     read -r -p "请输入数据库的端口(默认:9507): " mariadb_port
     [ -z "${mariadb_port}" ] && mariadb_port=9507
@@ -495,7 +484,7 @@ function installMariadb() {
     [ -z "${mariadb_user}" ] && mariadb_user="root"
     while read -r -p "请输入数据库的密码(必填): " mariadb_pas; do
       if [[ -z ${mariadb_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -524,30 +513,30 @@ function installMariadb() {
     fi
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-mariadb$") ]]; then
-      echoContent skyBlue "---> MariaDB安装完成"
-      echoContent yellow "---> MariaDB root的数据库密码(请妥善保存): ${mariadb_pas}"
+      echo_content skyBlue "---> MariaDB安装完成"
+      echo_content yellow "---> MariaDB root的数据库密码(请妥善保存): ${mariadb_pas}"
       if [[ "${mariadb_user}" != "root" ]];then
-        echoContent yellow "---> MariaDB ${mariadb_user}的数据库密码(请妥善保存): ${mariadb_pas}"
+        echo_content yellow "---> MariaDB ${mariadb_user}的数据库密码(请妥善保存): ${mariadb_pas}"
       fi
     else
-      echoContent red "---> MariaDB安装失败"
+      echo_content red "---> MariaDB安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了MariaDB"
+    echo_content skyBlue "---> 你已经安装了MariaDB"
   fi
 }
 
 # 安装Redis
-function installRedis() {
+function install_redis() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-redis$") ]]; then
-    echoContent green "---> 安装Redis"
+    echo_content green "---> 安装Redis"
 
     read -r -p "请输入Redis的端口(默认:6378): " redis_port
     [ -z "${redis_port}" ] && redis_port=6378
     while read -r -p "请输入Redis的密码(必填): " redis_pass; do
       if [[ -z ${redis_pass} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -560,21 +549,21 @@ function installRedis() {
     docker network connect trojan-panel-network trojan-panel-redis
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-redis$") ]]; then
-      echoContent skyBlue "---> Redis安装完成"
-      echoContent yellow "---> Redis的数据库密码(请妥善保存): ${redis_pass}"
+      echo_content skyBlue "---> Redis安装完成"
+      echo_content yellow "---> Redis的数据库密码(请妥善保存): ${redis_pass}"
     else
-      echoContent red "---> Redis安装失败"
+      echo_content red "---> Redis安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了Redis"
+    echo_content skyBlue "---> 你已经安装了Redis"
   fi
 }
 
 # 安装TrojanPanel
-function installTrojanPanel() {
+function install_trojan_panel() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel$") ]]; then
-    echoContent green "---> 安装TrojanPanel"
+    echo_content green "---> 安装TrojanPanel"
 
     read -r -p "请输入数据库的IP地址(默认:本机数据库): " mariadb_ip
     [ -z "${mariadb_ip}" ] && mariadb_ip="trojan-panel-mariadb"
@@ -584,7 +573,7 @@ function installTrojanPanel() {
     [ -z "${mariadb_user}" ] && mariadb_user="root"
     while read -r -p "请输入数据库的密码(必填): " mariadb_pas; do
       if [[ -z ${mariadb_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -596,7 +585,7 @@ function installTrojanPanel() {
     [ -z "${redis_port}" ] && redis_port=6379
     while read -r -p "请输入Redis的密码(必填): " redis_pass; do
       if [[ -z ${redis_pass} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -624,13 +613,13 @@ EOF
     --restart always trojan-panel \
     && docker network connect trojan-panel-network trojan-panel
     if [[ -n $(docker ps -q -f "name=^trojan-panel$") ]]; then
-      echoContent skyBlue "---> Trojan Panel后端安装完成"
+      echo_content skyBlue "---> Trojan Panel后端安装完成"
     else
-      echoContent red "---> Trojan Panel后端安装失败"
+      echo_content red "---> Trojan Panel后端安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了Trojan Panel"
+    echo_content skyBlue "---> 你已经安装了Trojan Panel"
   fi
 
   if [[ -z $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
@@ -694,29 +683,29 @@ EOF
   -v ${CADDY_ACME}${domain}:${CADDY_ACME}${domain} trojan-panel-ui \
   && docker network connect trojan-panel-network trojan-panel-ui
   if [[ -n $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
-    echoContent skyBlue "---> Trojan Panel前端安装完成"
+    echo_content skyBlue "---> Trojan Panel前端安装完成"
   else
-    echoContent red "---> Trojan Panel前端安装失败"
+    echo_content red "---> Trojan Panel前端安装失败"
     exit 0
   fi
   else
-    echoContent skyBlue "---> 你已经安装了Trojan Panel UI"
+    echo_content skyBlue "---> 你已经安装了Trojan Panel UI"
   fi
 
-  echoContent red "\n=============================================================="
-  echoContent skyBlue "Trojan Panel 安装成功"
-  echoContent yellow "MariaDB ${mariadb_user}的密码(请妥善保存): ${mariadb_pas}"
-  echoContent yellow "Redis的密码(请妥善保存): ${redis_pass}"
-  echoContent yellow "管理面板地址: https://${domain}:8888"
-  echoContent yellow "系统管理员 默认用户名: sysadmin 默认密码: 123456 请及时登陆管理面板修改密码"
-  echoContent yellow "Trojan Panel私钥和证书目录: ${CADDY_ACME}${domain}/"
-  echoContent red "\n=============================================================="
+  echo_content red "\n=============================================================="
+  echo_content skyBlue "Trojan Panel 安装成功"
+  echo_content yellow "MariaDB ${mariadb_user}的密码(请妥善保存): ${mariadb_pas}"
+  echo_content yellow "Redis的密码(请妥善保存): ${redis_pass}"
+  echo_content yellow "管理面板地址: https://${domain}:8888"
+  echo_content yellow "系统管理员 默认用户名: sysadmin 默认密码: 123456 请及时登陆管理面板修改密码"
+  echo_content yellow "Trojan Panel私钥和证书目录: ${CADDY_ACME}${domain}/"
+  echo_content red "\n=============================================================="
 }
 
 # 安装TrojanGFW 数据库版
 function installTrojanGFW() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
-    echoContent green "---> 安装TrojanGFW"
+    echo_content green "---> 安装TrojanGFW"
 
     read -r -p "请输入TrojanGFW的端口(默认:443): " trojanGFW_port
     [ -z "${trojanGFW_port}" ] && trojanGFW_port=443
@@ -728,7 +717,7 @@ function installTrojanGFW() {
     [ -z "${mariadb_user}" ] && mariadb_user="root"
     while read -r -p "请输入数据库的密码(必填): " mariadb_pas; do
       if [[ -z ${mariadb_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -792,32 +781,32 @@ EOF
     && docker network connect trojan-panel-network trojan-panel-trojanGFW
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
-      echoContent skyBlue "---> TrojanGFW 数据库版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "TrojanGFW+Caddy+Web+TLS节点 数据库版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "TrojanGFW的端口: ${trojanGFW_port}"
-      echoContent yellow "TrojanGFW的密码: 用户名&密码"
-      echoContent red "\n=============================================================="
+      echo_content skyBlue "---> TrojanGFW 数据库版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "TrojanGFW+Caddy+Web+TLS节点 数据库版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "TrojanGFW的端口: ${trojanGFW_port}"
+      echo_content yellow "TrojanGFW的密码: 用户名&密码"
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> TrojanGFW 数据库版 安装失败"
+      echo_content red "---> TrojanGFW 数据库版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了TrojanGFW 数据库版"
+    echo_content skyBlue "---> 你已经安装了TrojanGFW 数据库版"
   fi
 }
 
 # 安装TrojanGFW 单机版
 function installTrojanGFWStandalone() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
-    echoContent green "---> 安装TrojanGFW"
+    echo_content green "---> 安装TrojanGFW"
 
     read -r -p "请输入TrojanGFW的端口(默认:443): " trojanGFW_port
     [ -z "${trojanGFW_port}" ] && trojanGFW_port=443
     while read -r -p "请输入TrojanGFW的密码(必填): " trojan_pas; do
       if [[ -z ${trojan_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -883,26 +872,26 @@ EOF
     && docker network connect trojan-panel-network trojan-panel-trojanGFW
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
-      echoContent skyBlue "---> TrojanGFW 单机版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "TrojanGFW+Caddy+Web+TLS节点 单机版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "TrojanGFW的端口: ${trojanGFW_port}"
-      echoContent yellow "TrojanGFW的密码: ${trojan_pas}"
-      echoContent red "\n=============================================================="
+      echo_content skyBlue "---> TrojanGFW 单机版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "TrojanGFW+Caddy+Web+TLS节点 单机版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "TrojanGFW的端口: ${trojanGFW_port}"
+      echo_content yellow "TrojanGFW的密码: ${trojan_pas}"
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> TrojanGFW 单机版 安装失败"
+      echo_content red "---> TrojanGFW 单机版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了TrojanGFW 单机版"
+    echo_content skyBlue "---> 你已经安装了TrojanGFW 单机版"
   fi
 }
 
 # 安装TrojanGO 数据库版
-function installTrojanGO() {
+function install_trojanGO() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
-    echoContent green "---> 安装TrojanGO 数据库版"
+    echo_content green "---> 安装TrojanGO 数据库版"
 
     read -r -p "请输入TrojanGO的端口(默认:443): " trojanGO_port
     [ -z "${trojanGO_port}" ] && trojanGO_port=443
@@ -914,7 +903,7 @@ function installTrojanGO() {
     [ -z "${mariadb_user}" ] && mariadb_user="root"
     while read -r -p "请输入数据库的密码(必填): " mariadb_pas; do
       if [[ -z ${mariadb_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -926,7 +915,7 @@ function installTrojanGO() {
           break
       else
         if [[ ${trojanGO_mux_enable} != false ]]; then
-          echoContent red "不可以输入除false和true之外的其他字符"
+          echo_content red "不可以输入除false和true之外的其他字符"
         else
           break
         fi
@@ -939,7 +928,7 @@ function installTrojanGO() {
           break
       else
         if [[ ${trojanGO_websocket_enable} != true ]]; then
-          echoContent red "不可以输入除false和true之外的其他字符"
+          echo_content red "不可以输入除false和true之外的其他字符"
         else
           read -r -p "请输入Websocket路径(默认:trojan-panel-websocket-path): " trojanGO_websocket_path
           [ -z "${trojanGO_websocket_path}" ] && trojanGO_websocket_path="trojan-panel-websocket-path"
@@ -954,12 +943,12 @@ function installTrojanGO() {
           break
       else
         if [[ ${trojanGO_shadowsocks_enable} != true ]]; then
-          echoContent yellow "不可以输入除false和true之外的其他字符"
+          echo_content yellow "不可以输入除false和true之外的其他字符"
         else
-          echoContent skyBlue "Shadowsocks AEAD加密方式如下:"
-          echoContent yellow "1. AES-128-GCM(默认)"
-          echoContent yellow "2. CHACHA20-IETF-POLY1305"
-          echoContent yellow "3. AES-256-GCM"
+          echo_content skyBlue "Shadowsocks AEAD加密方式如下:"
+          echo_content yellow "1. AES-128-GCM(默认)"
+          echo_content yellow "2. CHACHA20-IETF-POLY1305"
+          echo_content yellow "3. AES-256-GCM"
           read -r -p "请输入Shadowsocks AEAD加密方式(默认:1): " selectMethodType
           [ -z "${selectMethodType}" ] && selectMethodType=1
           case ${selectMethodType} in
@@ -978,7 +967,7 @@ function installTrojanGO() {
 
           while read -r -p "请输入Shadowsocks AEAD加密密码(必填): " trojanGO_shadowsocks_password; do
             if [[ -z ${trojanGO_shadowsocks_password} ]]; then
-              echoContent red "密码不能为空"
+              echo_content red "密码不能为空"
             else
               break
             fi
@@ -1058,40 +1047,40 @@ EOF
     && docker network connect trojan-panel-network trojan-panel-trojanGO
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
-      echoContent skyBlue "---> TrojanGO 数据库版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 数据库版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "TrojanGO的端口: ${trojanGO_port}"
-      echoContent yellow "TrojanGO的密码: 用户名&密码"
-      echoContent yellow "TrojanGO私钥和证书目录: ${CADDY_ACME}${domain}/"
+      echo_content skyBlue "---> TrojanGO 数据库版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 数据库版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "TrojanGO的端口: ${trojanGO_port}"
+      echo_content yellow "TrojanGO的密码: 用户名&密码"
+      echo_content yellow "TrojanGO私钥和证书目录: ${CADDY_ACME}${domain}/"
       if [[ ${trojanGO_websocket_enable} = true ]]; then
-          echoContent yellow "Websocket路径: ${trojanGO_websocket_path}"
+          echo_content yellow "Websocket路径: ${trojanGO_websocket_path}"
       fi
       if [[ ${trojanGO_shadowsocks_enable} = true ]]; then
-          echoContent yellow "Shadowsocks AEAD加密方式: ${trojanGO_shadowsocks_method}"
-          echoContent yellow "Shadowsocks AEAD加密密码: ${trojanGO_shadowsocks_password}"
+          echo_content yellow "Shadowsocks AEAD加密方式: ${trojanGO_shadowsocks_method}"
+          echo_content yellow "Shadowsocks AEAD加密密码: ${trojanGO_shadowsocks_password}"
       fi
-      echoContent red "\n=============================================================="
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> TrojanGO 数据库版 安装失败"
+      echo_content red "---> TrojanGO 数据库版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了TrojanGO 数据库版"
+    echo_content skyBlue "---> 你已经安装了TrojanGO 数据库版"
   fi
 }
 
 # 安装TrojanGO 单机版
-function installTrojanGOStandalone() {
+function install_trojanGO_standalone() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
-    echoContent green "---> 安装TrojanGO 单机版"
+    echo_content green "---> 安装TrojanGO 单机版"
 
     read -r -p "请输入TrojanGO的端口(默认:443): " trojanGO_port
     [ -z "${trojanGO_port}" ] && trojanGO_port=443
     while read -r -p "请输入TrojanGO的密码(必填): " trojan_pas; do
       if [[ -z ${trojan_pas} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -1103,7 +1092,7 @@ function installTrojanGOStandalone() {
           break
       else
         if [[ ${trojanGO_mux_enable} != false ]]; then
-          echoContent red "不可以输入除false和true之外的其他字符"
+          echo_content red "不可以输入除false和true之外的其他字符"
         else
           break
         fi
@@ -1116,7 +1105,7 @@ function installTrojanGOStandalone() {
           break
       else
         if [[ ${trojanGO_websocket_enable} != true ]]; then
-          echoContent red "不可以输入除false和true之外的其他字符"
+          echo_content red "不可以输入除false和true之外的其他字符"
         else
           read -r -p "请输入Websocket路径(默认:trojan-panel-websocket-path): " trojanGO_websocket_path
           [ -z "${trojanGO_websocket_path}" ] && trojanGO_websocket_path="trojan-panel-websocket-path"
@@ -1131,12 +1120,12 @@ function installTrojanGOStandalone() {
           break
       else
         if [[ ${trojanGO_shadowsocks_enable} != true ]]; then
-          echoContent yellow "不可以输入除false和true之外的其他字符"
+          echo_content yellow "不可以输入除false和true之外的其他字符"
         else
-          echoContent skyBlue "Shadowsocks AEAD加密方式如下:"
-          echoContent yellow "1. AES-128-GCM(默认)"
-          echoContent yellow "2. CHACHA20-IETF-POLY1305"
-          echoContent yellow "3. AES-256-GCM"
+          echo_content skyBlue "Shadowsocks AEAD加密方式如下:"
+          echo_content yellow "1. AES-128-GCM(默认)"
+          echo_content yellow "2. CHACHA20-IETF-POLY1305"
+          echo_content yellow "3. AES-256-GCM"
           read -r -p "请输入Shadowsocks AEAD加密方式(默认:1): " selectMethodType
           [ -z "${selectMethodType}" ] && selectMethodType=1
           case ${selectMethodType} in
@@ -1155,7 +1144,7 @@ function installTrojanGOStandalone() {
 
           while read -r -p "请输入Shadowsocks AEAD加密密码(必填): " trojanGO_shadowsocks_password; do
             if [[ -z ${trojanGO_shadowsocks_password} ]]; then
-              echoContent red "密码不能为空"
+              echo_content red "密码不能为空"
             else
               break
             fi
@@ -1238,37 +1227,37 @@ EOF
     && docker network connect trojan-panel-network trojan-panel-trojanGO-standalone
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
-      echoContent skyBlue "---> TrojanGO 单机版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 单机版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "TrojanGO的端口: ${trojanGO_port}"
-      echoContent yellow "TrojanGO的密码: ${trojan_pas}"
-      echoContent yellow "TrojanGO私钥和证书目录: ${CADDY_ACME}${domain}/"
+      echo_content skyBlue "---> TrojanGO 单机版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 单机版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "TrojanGO的端口: ${trojanGO_port}"
+      echo_content yellow "TrojanGO的密码: ${trojan_pas}"
+      echo_content yellow "TrojanGO私钥和证书目录: ${CADDY_ACME}${domain}/"
       if [[ ${trojanGO_websocket_enable} = true ]]; then
-          echoContent yellow "Websocket路径: ${trojanGO_websocket_path}"
+          echo_content yellow "Websocket路径: ${trojanGO_websocket_path}"
       fi
       if [[ ${trojanGO_shadowsocks_enable} = true ]]; then
-          echoContent yellow "Shadowsocks AEAD加密方式: ${trojanGO_shadowsocks_method}"
-          echoContent yellow "Shadowsocks AEAD加密密码: ${trojanGO_shadowsocks_password}"
+          echo_content yellow "Shadowsocks AEAD加密方式: ${trojanGO_shadowsocks_method}"
+          echo_content yellow "Shadowsocks AEAD加密密码: ${trojanGO_shadowsocks_password}"
       fi
-      echoContent red "\n=============================================================="
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> TrojanGO 单机版 安装失败"
+      echo_content red "---> TrojanGO 单机版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经了安装了TrojanGO 单机版"
+    echo_content skyBlue "---> 你已经了安装了TrojanGO 单机版"
   fi
 }
 
-function installHysteria(){
+function install_hysteria(){
   if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
-    echoContent green "---> 安装Hysteria 数据库版"
+    echo_content green "---> 安装Hysteria 数据库版"
 
-    echoContent skyBlue "Hysteria的模式如下:"
-    echoContent yellow "1. udp(默认)"
-    echoContent yellow "2. faketcp"
+    echo_content skyBlue "Hysteria的模式如下:"
+    echo_content yellow "1. udp(默认)"
+    echo_content yellow "2. faketcp"
     read -r -p "请输入Hysteria的模式(默认:1): " selectProtocolType
     [ -z "${selectProtocolType}" ] && selectProtocolType=1
     case ${selectProtocolType} in
@@ -1316,30 +1305,30 @@ EOF
     docker network connect trojan-panel-network trojan-panel-hysteria
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
-      echoContent skyBlue "---> Hysteria 数据版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "Hysteria节点 数据版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "Hysteria的端口: ${hysteria_port}"
-      echoContent yellow "Hysteria的密码: 用户名&密码"
-      echoContent yellow "Hysteria私钥和证书目录: ${CADDY_ACME}${domain}/"
-      echoContent red "\n=============================================================="
+      echo_content skyBlue "---> Hysteria 数据版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "Hysteria节点 数据版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "Hysteria的端口: ${hysteria_port}"
+      echo_content yellow "Hysteria的密码: 用户名&密码"
+      echo_content yellow "Hysteria私钥和证书目录: ${CADDY_ACME}${domain}/"
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> Hysteria 数据版 安装失败"
+      echo_content red "---> Hysteria 数据版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了Hysteria 数据版"
+    echo_content skyBlue "---> 你已经安装了Hysteria 数据版"
   fi
 }
 
-function installHysteriaStandalone(){
+function install_hysteria_standalone(){
   if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
-    echoContent green "---> 安装Hysteria 单机版"
+    echo_content green "---> 安装Hysteria 单机版"
 
-    echoContent skyBlue "Hysteria的模式如下:"
-    echoContent yellow "1. udp(默认)"
-    echoContent yellow "2. faketcp"
+    echo_content skyBlue "Hysteria的模式如下:"
+    echo_content yellow "1. udp(默认)"
+    echo_content yellow "2. faketcp"
     read -r -p "请输入Hysteria的模式(默认:1): " selectProtocolType
     [ -z "${selectProtocolType}" ] && selectProtocolType=1
     case ${selectProtocolType} in
@@ -1360,7 +1349,7 @@ function installHysteriaStandalone(){
     [ -z "${hysteria_down_mbps}" ] && hysteria_down_mbps=100
     while read -r -p "请输入Hysteria的密码(必填): " hysteria_password; do
       if [[ -z ${hysteria_password} ]]; then
-        echoContent red "密码不能为空"
+        echo_content red "密码不能为空"
       else
         break
       fi
@@ -1386,30 +1375,30 @@ EOF
     docker network connect trojan-panel-network trojan-panel-hysteria-standalone
 
     if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
-      echoContent skyBlue "---> Hysteria 单机版 安装完成"
-      echoContent red "\n=============================================================="
-      echoContent skyBlue "Hysteria节点 单机版 安装成功"
-      echoContent yellow "域名: ${domain}"
-      echoContent yellow "Hysteria的端口: ${hysteria_port}"
-      echoContent yellow "Hysteria的密码: ${hysteria_password}"
-      echoContent yellow "Hysteria私钥和证书目录: ${CADDY_ACME}${domain}/"
-      echoContent red "\n=============================================================="
+      echo_content skyBlue "---> Hysteria 单机版 安装完成"
+      echo_content red "\n=============================================================="
+      echo_content skyBlue "Hysteria节点 单机版 安装成功"
+      echo_content yellow "域名: ${domain}"
+      echo_content yellow "Hysteria的端口: ${hysteria_port}"
+      echo_content yellow "Hysteria的密码: ${hysteria_password}"
+      echo_content yellow "Hysteria私钥和证书目录: ${CADDY_ACME}${domain}/"
+      echo_content red "\n=============================================================="
     else
-      echoContent red "---> Hysteria 单机版 安装失败"
+      echo_content red "---> Hysteria 单机版 安装失败"
       exit 0
     fi
   else
-    echoContent skyBlue "---> 你已经安装了Hysteria 单机版"
+    echo_content skyBlue "---> 你已经安装了Hysteria 单机版"
   fi
 }
 
 # 更新Trojan Panel
-function updateTrojanPanel() {
-  echoContent green "---> 更新Trojan Panel"
+function update_trojan_panel() {
+  echo_content green "---> 更新Trojan Panel"
 
   # 判断Trojan Panel是否安装
   if [[ -z $(docker ps -q -f "name=^trojan-panel$") ]];then
-    echoContent red "---> 请先安装Trojan Panel"
+    echo_content red "---> 请先安装Trojan Panel"
     exit 0
   fi
 
@@ -1427,7 +1416,7 @@ function updateTrojanPanel() {
   [ -z "${mariadb_user}" ] && mariadb_user="root"
   while read -r -p "请输入数据库的密码(必填): " mariadb_pas; do
     if [[ -z ${mariadb_pas} ]]; then
-      echoContent red "密码不能为空"
+      echo_content red "密码不能为空"
     else
       break
     fi
@@ -1447,7 +1436,7 @@ function updateTrojanPanel() {
   [ -z "${redis_port}" ] && redis_port=6379
   while read -r -p "请输入Redis的密码(必填): " redis_pass; do
     if [[ -z ${redis_pass} ]]; then
-      echoContent red "密码不能为空"
+      echo_content red "密码不能为空"
     else
       break
     fi
@@ -1465,21 +1454,21 @@ function updateTrojanPanel() {
   && docker restart trojan-panel-ui
 
   if [ $? -ne 0 ]; then
-    echoContent red "---> Trojan Panel更新失败"
+    echo_content red "---> Trojan Panel更新失败"
   else
-    echoContent skyBlue "---> Trojan Panel更新完成"
+    echo_content skyBlue "---> Trojan Panel更新完成"
   fi
 }
 
 # 卸载Caddy TLS
-function uninstallCaddyTLS() {
+function uninstall_caddy_tls() {
   docker rm -f trojan-panel-caddy
   rm -rf ${CADDY_DATA}
 }
 
 # 卸载Trojan Panel
-function uninstallTrojanPanel() {
-  echoContent green "---> 卸载Trojan Panel"
+function uninstall_trojan_panel() {
+  echo_content green "---> 卸载Trojan Panel"
 
   # 强制删除容器
   docker rm -f trojan-panel-ui
@@ -1493,13 +1482,13 @@ function uninstallTrojanPanel() {
   rm -rf ${TROJAN_PANEL_UI_DATA}
   rm -rf ${NGINX_DATA}
 
-  echoContent skyBlue "---> Trojan Panel卸载完成"
+  echo_content skyBlue "---> Trojan Panel卸载完成"
 }
 
 # 卸载TrojanGFW+Caddy+Web+TLS节点 数据库版
 function uninstallTrojanGFW() {
   if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]];then
-    echoContent green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 数据库版"
+    echo_content green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 数据库版"
 
     # 强制删除容器
     docker rm -f trojan-panel-trojanGFW
@@ -1509,16 +1498,16 @@ function uninstallTrojanGFW() {
     # 删除文件
     rm -f ${TROJANGFW_CONFIG}
 
-    echoContent skyBlue "---> TrojanGFW+Caddy+Web+TLS节点 数据库版卸载完成"
+    echo_content skyBlue "---> TrojanGFW+Caddy+Web+TLS节点 数据库版卸载完成"
   else
-    echoContent red "---> 请先安装TrojanGFW+Caddy+Web+TLS节点 数据库版"
+    echo_content red "---> 请先安装TrojanGFW+Caddy+Web+TLS节点 数据库版"
   fi
 }
 
 # 卸载TrojanGFW+Caddy+Web+TLS节点 单机版
 function uninstallTrojanGFWStandalone() {
   if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]];then
-    echoContent green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 单机版"
+    echo_content green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 单机版"
 
     # 强制删除容器
     docker rm -f trojan-panel-trojanGFW-standalone
@@ -1528,16 +1517,16 @@ function uninstallTrojanGFWStandalone() {
     # 删除文件
     rm -f ${TROJANGFW_STANDALONE_CONFIG}
 
-    echoContent skyBlue "---> TrojanGFW+Caddy+Web+TLS节点 单机版卸载完成"
+    echo_content skyBlue "---> TrojanGFW+Caddy+Web+TLS节点 单机版卸载完成"
   else
-    echoContent red "---> 请先安装TrojanGFW+Caddy+Web+TLS节点 单机版"
+    echo_content red "---> 请先安装TrojanGFW+Caddy+Web+TLS节点 单机版"
   fi
 }
 
 # 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版
-function uninstallTrojanGO() {
+function uninstall_trojanGO() {
   if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
-    echoContent green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
+    echo_content green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
 
     # 强制删除容器
     docker rm -f trojan-panel-trojanGO
@@ -1547,16 +1536,16 @@ function uninstallTrojanGO() {
     # 删除文件
     rm -f ${TROJANGO_CONFIG}
 
-    echoContent skyBlue "---> TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版卸载完成"
+    echo_content skyBlue "---> TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版卸载完成"
   else
-    echoContent red "---> 请先安装TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
+    echo_content red "---> 请先安装TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
   fi
 }
 
 # 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版
-function uninstallTrojanGOStandalone() {
+function uninstall_trojanGO_standalone() {
   if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
-    echoContent green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
+    echo_content green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
 
     # 强制删除容器
     docker rm -f trojan-panel-trojanGO-standalone
@@ -1566,15 +1555,15 @@ function uninstallTrojanGOStandalone() {
     # 删除文件
     rm -f ${TROJANGO_STANDALONE_CONFIG}
 
-    echoContent skyBlue "---> TrojanGo+Caddy+Web+TLS+Websocket节点 单机版卸载完成"
+    echo_content skyBlue "---> TrojanGo+Caddy+Web+TLS+Websocket节点 单机版卸载完成"
   else
-    echoContent red "---> 请先安装TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
+    echo_content red "---> 请先安装TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
   fi
 }
 
-function uninstallHysteria(){
+function uninstall_hysteria(){
   if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria") ]]; then
-    echoContent green "---> 卸载Hysteria节点 数据库版"
+    echo_content green "---> 卸载Hysteria节点 数据库版"
 
     # 强制删除容器
     docker rm -f trojan-panel-hysteria
@@ -1584,15 +1573,15 @@ function uninstallHysteria(){
     # 删除文件
     rm -f ${HYSTERIA_CONFIG}
 
-    echoContent skyBlue "---> Hysteria节点 数据库版卸载完成"
+    echo_content skyBlue "---> Hysteria节点 数据库版卸载完成"
   else
-    echoContent red "---> 请先安装Hysteria节点 数据库版"
+    echo_content red "---> 请先安装Hysteria节点 数据库版"
   fi
 }
 
-function uninstallHysteriaStandalone(){
+function uninstall_hysteria_standalone(){
   if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
-    echoContent green "---> 卸载Hysteria节点 单机版"
+    echo_content green "---> 卸载Hysteria节点 单机版"
 
     # 强制删除容器
     docker rm -f trojan-panel-hysteria-standalone
@@ -1602,14 +1591,14 @@ function uninstallHysteriaStandalone(){
     # 删除文件
     rm -f ${HYSTERIA_STANDALONE_CONFIG}
 
-    echoContent skyBlue "---> Hysteria节点 单机版卸载完成"
+    echo_content skyBlue "---> Hysteria节点 单机版卸载完成"
   else
-    echoContent red "---> 请先安装Hysteria节点 单机版"
+    echo_content red "---> 请先安装Hysteria节点 单机版"
   fi
 }
 
 # 卸载阿里云内置相关监控
-function uninstallAliyun() {
+function uninstall_aliyun() {
   # 卸载云监控(Cloudmonitor) Java 版
   /usr/local/cloudmonitor/wrapper/bin/cloudmonitor.sh stop && \
   /usr/local/cloudmonitor/wrapper/bin/cloudmonitor.sh remove && \
@@ -1635,88 +1624,88 @@ function uninstallAliyun() {
 
 function main() {
   cd "$HOME" || exit
-  initVar
-  mkdirTools
-  checkSystem
+  init_var
+  mkdir_tools
+  check_sys
   clear
-  echoContent red "\n=============================================================="
-  echoContent skyBlue "System Required: CentOS 6+, Debian8+, Ubuntu16+"
-  echoContent skyBlue "Version: v1.0.0"
-  echoContent skyBlue "Description: One click Install Trojan Panel server"
-  echoContent skyBlue "Author: jonssonyan <https://jonssonyan.com>"
-  echoContent skyBlue "Github: https://github.com/trojanpanel/install-script"
-  echoContent red "\n=============================================================="
-  echoContent yellow "1. 卸载阿里云盾(仅支持阿里云服务器)"
-  echoContent yellow "2. 安装BBRPlus(仅支持CentOS系统)"
-  echoContent green "\n=============================================================="
-  echoContent yellow "3. 安装Trojan Panel"
-  echoContent yellow "4. 更新Trojan Panel(注意: 会清除数据)"
-  echoContent yellow "5. 卸载Trojan Panel"
-  echoContent green "\n=============================================================="
-  echoContent yellow "6. 安装TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
-  echoContent yellow "7. 安装TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
-  echoContent yellow "8. 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
-  echoContent yellow "9. 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
-  echoContent green "\n=============================================================="
-  echoContent yellow "10. 安装Hysteria节点 数据库版(测试)"
-  echoContent yellow "11. 安装Hysteria节点 单机版(测试)"
-  echoContent yellow "12. 卸载Hysteria节点 数据库版(测试)"
-  echoContent yellow "13. 卸载Hysteria节点 单机版(测试)"
-  read -r -p "请选择:" selectInstallType
-  case ${selectInstallType} in
+  echo_content red "\n=============================================================="
+  echo_content skyBlue "System Required: CentOS 6+, Debian8+, Ubuntu16+"
+  echo_content skyBlue "Version: v1.0.0"
+  echo_content skyBlue "Description: One click Install Trojan Panel server"
+  echo_content skyBlue "Author: jonssonyan <https://jonssonyan.com>"
+  echo_content skyBlue "Github: https://github.com/trojanpanel/install-script"
+  echo_content red "\n=============================================================="
+  echo_content yellow "1. 卸载阿里云盾(仅支持阿里云服务器)"
+  echo_content yellow "2. 安装BBRPlus(仅支持CentOS系统)"
+  echo_content green "\n=============================================================="
+  echo_content yellow "3. 安装Trojan Panel"
+  echo_content yellow "4. 更新Trojan Panel(注意: 会清除数据)"
+  echo_content yellow "5. 卸载Trojan Panel"
+  echo_content green "\n=============================================================="
+  echo_content yellow "6. 安装TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
+  echo_content yellow "7. 安装TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
+  echo_content yellow "8. 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
+  echo_content yellow "9. 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
+  echo_content green "\n=============================================================="
+  echo_content yellow "10. 安装Hysteria节点 数据库版(测试)"
+  echo_content yellow "11. 安装Hysteria节点 单机版(测试)"
+  echo_content yellow "12. 卸载Hysteria节点 数据库版(测试)"
+  echo_content yellow "13. 卸载Hysteria节点 单机版(测试)"
+  read -r -p "请选择:" selectInstall_type
+  case ${selectInstall_type} in
   1)
-    uninstallAliyun
+    uninstall_aliyun
     ;;
   2)
-    installBBRPlus
+    install_bbr_plus
     ;;
   3)
-    installDocker
-    installCaddyTLS
-    installMariadb
-    installRedis
-    installTrojanPanel
+    install_docker
+    install_caddy_tls
+    install_mariadb
+    install_redis
+    install_trojan_panel
     ;;
   4)
-    updateTrojanPanel
+    update_trojan_panel
     ;;
   5)
-    uninstallTrojanPanel
+    uninstall_trojan_panel
     ;;
   6)
-    installDocker
-    installCaddyTLS
-    installTrojanGO
+    install_docker
+    install_caddy_tls
+    install_trojanGO
     ;;
   7)
-    installDocker
-    installCaddyTLS
-    installTrojanGOStandalone
+    install_docker
+    install_caddy_tls
+    install_trojanGO_standalone
     ;;
   8)
-    uninstallTrojanGO
+    uninstall_trojanGO
     ;;
   9)
-    uninstallTrojanGOStandalone
+    uninstall_trojanGO_standalone
     ;;
   10)
-    installDocker
-    installCaddyTLS
-    installHysteria
+    install_docker
+    install_caddy_tls
+    install_hysteria
     ;;
   11)
-    installDocker
-    installCaddyTLS
-    installHysteriaStandalone
+    install_docker
+    install_caddy_tls
+    install_hysteria_standalone
     ;;
   12)
-    uninstallHysteria
+    uninstall_hysteria
     ;;
   13)
-    uninstallHysteriaStandalone
+    uninstall_hysteria_standalone
     ;;
   *)
-    echoContent red "没有这个选项"
+    echo_content red "没有这个选项"
   esac
 }
 
