@@ -9,22 +9,22 @@ export PATH
 # Github: https://github.com/trojanpanel/install-script
 
 init_var() {
-  echo_type="echo -e"
+  ECHO_TYPE="echo -e"
 
   # 系统
-  release=
+  release=""
   # CentOS版本
-  centos_version=
+  centos_version=""
   # Debian版本
-  debian_version=
+  debian_version=""
 
   # Docker
-  docker_mirror="http://hub-mirror.c.163.com"
+  DOCKER_MIRROR="http://hub-mirror.c.163.com"
 
   # 项目目录
   TP_DATA="/tpdata/"
 
-  static_html="https://github.com/trojanpanel/install-script/releases/latest/download/html.tar.gz"
+  STATIC_HTML="https://github.com/trojanpanel/install-script/releases/latest/download/html.tar.gz"
 
   # MariaDB
   MARIA_DATA="/tpdata/mariadb/"
@@ -59,8 +59,8 @@ init_var() {
   CADDY_Caddyfile="/tpdata/caddy/Caddyfile"
   CADDY_SRV="/tpdata/caddy/srv/"
   CADDY_ACME="/tpdata/caddy/acme/"
-  domain=""
   DOMAIN_FILE="/tpdata/caddy/domain.lock"
+  domain=""
   caddy_remote_port=8863
   your_email="123456@qq.com"
   crt_path=""
@@ -102,25 +102,25 @@ init_var() {
 echo_content() {
   case $1 in
   "red")
-    ${echo_type} "\033[31m$2\033[0m"
+    ${ECHO_TYPE} "\033[31m$2\033[0m"
     ;;
   "green")
-    ${echo_type} "\033[32m$2\033[0m"
+    ${ECHO_TYPE} "\033[32m$2\033[0m"
     ;;
   "yellow")
-    ${echo_type} "\033[33m$2\033[0m"
+    ${ECHO_TYPE} "\033[33m$2\033[0m"
     ;;
   "blue")
-    ${echo_type} "\033[34m$2\033[0m"
+    ${ECHO_TYPE} "\033[34m$2\033[0m"
     ;;
   "purple")
-    ${echo_type} "\033[35m$2\033[0m"
+    ${ECHO_TYPE} "\033[35m$2\033[0m"
     ;;
   "skyBlue")
-    ${echo_type} "\033[36m$2\033[0m"
+    ${ECHO_TYPE} "\033[36m$2\033[0m"
     ;;
   "white")
-    ${echo_type} "\033[37m$2\033[0m"
+    ${ECHO_TYPE} "\033[37m$2\033[0m"
     ;;
   esac
 }
@@ -328,7 +328,7 @@ install_docker() {
       mkdir -p /etc/docker && \
       cat >/etc/docker/daemon.json <<EOF
 {
- "registry-mirrors":["${docker_mirror}"]
+ "registry-mirrors":["${DOCKER_MIRROR}"]
 }
 EOF
     fi
@@ -356,7 +356,7 @@ install_caddy_tls() {
   if [[ -z $(docker ps -q -f "name=^trojan-panel-caddy$") ]]; then
     echo_content green "---> 安装Caddy TLS"
 
-    wget --no-check-certificate -O ${CADDY_DATA}html.tar.gz ${static_html} && \
+    wget --no-check-certificate -O ${CADDY_DATA}html.tar.gz ${STATIC_HTML} && \
     tar -zxvf ${CADDY_DATA}html.tar.gz -C ${CADDY_SRV}
 
     read -r -p "请输入Caddy的转发端口(用于申请证书,默认:8863): " caddy_remote_port
