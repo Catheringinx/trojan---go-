@@ -450,11 +450,14 @@ EOF
     fi
 
     docker pull abiosoft/caddy:1.0.3 && \
-    docker run -d --name trojan-panel-caddy --restart always -e ACME_AGREE=true \
-    -p 80:80 -p ${caddy_remote_port}:${caddy_remote_port} \
+    docker run -d --name trojan-panel-caddy --restart always \
+    -p 80:80 \
+    -p ${caddy_remote_port}:${caddy_remote_port} \
     -v ${CADDY_Caddyfile}:"/etc/Caddyfile" \
     -v ${CADDY_ACME}:"/root/.caddy/acme/acme-v02.api.letsencrypt.org/sites/" \
-    -v ${CADDY_SRV}:${CADDY_SRV} abiosoft/caddy:1.0.3 && \
+    -v ${CADDY_SRV}:${CADDY_SRV} \
+    -e ACME_AGREE=true \
+    abiosoft/caddy:1.0.3 && \
     docker network connect trojan-panel-network trojan-panel-caddy
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-caddy$") ]]; then
@@ -496,7 +499,8 @@ install_mariadb() {
       -v ${MARIA_DATA}:/var/lib/mysql \
       -e MYSQL_DATABASE="trojan_panel_db" \
       -e MYSQL_ROOT_PASSWORD="${mariadb_pas}" \
-      -e TZ=Asia/Shanghai mariadb:10.7.3 && \
+      -e TZ=Asia/Shanghai \
+      mariadb:10.7.3 && \
       docker network connect trojan-panel-network trojan-panel-mariadb
     else
       docker pull mariadb:10.7.3 && \
@@ -507,7 +511,8 @@ install_mariadb() {
       -e MYSQL_ROOT_PASSWORD="${mariadb_pas}" \
       -e MYSQL_USER="${mariadb_user}" \
       -e MYSQL_PASSWORD="${mariadb_pas}" \
-      -e TZ=Asia/Shanghai mariadb:10.7.3 && \
+      -e TZ=Asia/Shanghai \
+      mariadb:10.7.3 && \
       docker network connect trojan-panel-network trojan-panel-mariadb
     fi
 
@@ -543,7 +548,8 @@ install_redis() {
 
     docker pull redis:6.2.7 && \
     docker run -d --name trojan-panel-redis --restart always \
-    -p ${redis_port}:6379 -v ${REDIS_DATA}:/data redis:6.2.7 \
+    -p ${redis_port}:6379 \
+    -v ${REDIS_DATA}:/data redis:6.2.7 \
     redis-server --requirepass "${redis_pass}" && \
     docker network connect trojan-panel-network trojan-panel-redis
 
@@ -607,9 +613,12 @@ ENTRYPOINT ["./trojan-panel","-host=${mariadb_ip}","-port=${mariadb_port}","-use
 EOF
 
     docker build -t trojan-panel ${TROJAN_PANEL_DATA} && \
-    docker run -d --name trojan-panel -p 8081:8081 \
-    -v ${CADDY_SRV}:${TROJAN_PANEL_WEBFILE} -v ${TROJAN_PANEL_LOGS}:${TROJAN_PANEL_LOGS} -v /etc/localtime:/etc/localtime \
-    --restart always trojan-panel && \
+    docker run -d --name trojan-panel --restart always \
+    -p 8081:8081 \
+    -v ${CADDY_SRV}:${TROJAN_PANEL_WEBFILE} \
+    -v ${TROJAN_PANEL_LOGS}:${TROJAN_PANEL_LOGS} \
+    -v /etc/localtime:/etc/localtime \
+    trojan-panel && \
     docker network connect trojan-panel-network trojan-panel
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel$") ]]; then
@@ -678,9 +687,11 @@ server {
 EOF
 
     docker build -t trojan-panel-ui ${TROJAN_PANEL_UI_DATA} && \
-    docker run -d --name trojan-panel-ui -p 8888:80 --restart always \
+    docker run -d --name trojan-panel-ui --restart always \
+    -p 8888:80 \
     -v ${NGINX_CONFIG}:/etc/nginx/conf.d/default.conf \
-    -v ${CADDY_ACME}"${domain}":${CADDY_ACME}"${domain}" trojan-panel-ui && \
+    -v ${CADDY_ACME}"${domain}":${CADDY_ACME}"${domain}" \
+    trojan-panel-ui && \
     docker network connect trojan-panel-network trojan-panel-ui
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
@@ -778,7 +789,9 @@ EOF
     docker pull trojangfw/trojan && \
     docker run -d --name trojan-panel-trojanGFW --restart always \
     -p ${trojanGFW_port}:${trojanGFW_port} \
-    -v ${TROJANGFW_CONFIG}:"/config/config.json" -v ${CADDY_ACME}:${CADDY_ACME} trojangfw/trojan && \
+    -v ${TROJANGFW_CONFIG}:"/config/config.json" \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
+    trojangfw/trojan && \
     docker network connect trojan-panel-network trojan-panel-trojanGFW
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
@@ -869,7 +882,9 @@ EOF
     docker pull trojangfw/trojan && \
     docker run -d --name trojan-panel-trojanGFW-standalone --restart always \
     -p ${trojanGFW_port}:${trojanGFW_port} \
-    -v ${TROJANGFW_STANDALONE_CONFIG}:"/config/config.json" -v ${CADDY_ACME}:${CADDY_ACME} trojangfw/trojan && \
+    -v ${TROJANGFW_STANDALONE_CONFIG}:"/config/config.json" \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
+    trojangfw/trojan && \
     docker network connect trojan-panel-network trojan-panel-trojanGFW
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
@@ -1046,7 +1061,9 @@ EOF
     docker pull p4gefau1t/trojan-go && \
     docker run -d --name trojan-panel-trojanGO --restart=always \
     -p ${trojanGO_port}:${trojanGO_port} \
-    -v ${TROJANGO_CONFIG}:"/etc/trojan-go/config.json" -v ${CADDY_ACME}:${CADDY_ACME} p4gefau1t/trojan-go && \
+    -v ${TROJANGO_CONFIG}:"/etc/trojan-go/config.json" \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
+    p4gefau1t/trojan-go && \
     docker network connect trojan-panel-network trojan-panel-trojanGO
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
@@ -1227,7 +1244,9 @@ EOF
     docker pull p4gefau1t/trojan-go && \
     docker run -d --name trojan-panel-trojanGO-standalone --restart=always \
     -p ${trojanGO_port}:${trojanGO_port} \
-    -v ${TROJANGO_STANDALONE_CONFIG}:"/etc/trojan-go/config.json" -v ${CADDY_ACME}:${CADDY_ACME} p4gefau1t/trojan-go && \
+    -v ${TROJANGO_STANDALONE_CONFIG}:"/etc/trojan-go/config.json" \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
+    p4gefau1t/trojan-go && \
     docker network connect trojan-panel-network trojan-panel-trojanGO-standalone
 
     if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
@@ -1304,8 +1323,10 @@ EOF
 
     docker pull tobyxdd/hysteria && \
     docker run -d --name trojan-panel-hysteria --restart=always \
-    -p ${hysteria_port}:${hysteria_port}/udp -p 8801:8801 \
-    -v ${HYSTERIA_CONFIG}:/etc/hysteria.json -v ${CADDY_ACME}:${CADDY_ACME} \
+    -p ${hysteria_port}:${hysteria_port}/udp \
+    -p 8801:8801 \
+    -v ${HYSTERIA_CONFIG}:/etc/hysteria.json \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
     tobyxdd/hysteria -c /etc/hysteria.json server && \
     docker network connect trojan-panel-network trojan-panel-hysteria
 
@@ -1376,7 +1397,8 @@ EOF
     docker pull tobyxdd/hysteria && \
     docker run -d --name trojan-panel-hysteria-standalone --restart=always \
     -p ${hysteria_port}:${hysteria_port}/udp \
-    -v ${HYSTERIA_STANDALONE_CONFIG}:/etc/hysteria.json -v ${CADDY_ACME}:${CADDY_ACME} \
+    -v ${HYSTERIA_STANDALONE_CONFIG}:/etc/hysteria.json \
+    -v ${CADDY_ACME}:${CADDY_ACME} \
     tobyxdd/hysteria -c /etc/hysteria.json server && \
     docker network connect trojan-panel-network trojan-panel-hysteria-standalone
 
