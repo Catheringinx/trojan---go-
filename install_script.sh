@@ -236,7 +236,7 @@ install_bbr_plus() {
   rm -f kernel-${kernel_version}.rpm
 
   read -r -p "BBRPlusPlus安装完成，现在重启 ? [Y/n] :" yn
-  [ -z "${yn}" ] && yn="y"
+  [[ -z "${yn}" ]] && yn="y"
   if [[ $yn == [Yy] ]]; then
     echo_content green "重启中..."
     reboot
@@ -323,7 +323,8 @@ install_docker() {
     # 时区
     timedatectl set-timezone Asia/Shanghai
 
-    if [[ ! $(ping -c2 -i0.3 -W1 www.google.com 2>/dev/null) ]]; then
+    ping -c2 -i0.3 -W1 www.google.com 2>/dev/null
+    if [[ "$?" != "0" ]]; then
       # 设置Docker国内源
       mkdir -p /etc/docker && \
       cat >/etc/docker/daemon.json <<EOF
@@ -373,7 +374,7 @@ install_caddy_tls() {
     mkdir "${CADDY_ACME}${domain}"
 
     while read -r -p "请选择设置证书的方式?(1/自动申请和续签证书 2/手动设置证书路径 默认:1/自动申请和续签证书): " ssl_option; do
-      if [[ -z ${ssl_option} ]] || [[ ${ssl_option} == 1 ]]; then
+      if [[ -z ${ssl_option} || ${ssl_option} == 1 ]]; then
 
         echo_content yellow "正在检测域名,请稍后..."
         ping_ip=$(ping "${domain}" -s1 -c1 | grep "${domain}" | head -n1 | cut -d"(" -f2 | cut -d")" -f1)
@@ -444,9 +445,10 @@ EOF
       fi
     done
 
-    if [[ $(lsof -i:80,443 -t) != "" ]]; then
+    if [[ ! $(lsof -i:80,443 -t) ]]; then
       kill -9 "$(lsof -i:80,443 -t)"
     fi
+
     docker pull abiosoft/caddy:1.0.3 && \
     docker run -d --name trojan-panel-caddy --restart always -e ACME_AGREE=true \
     -p 80:80 -p ${caddy_remote_port}:${caddy_remote_port} \
@@ -609,6 +611,7 @@ EOF
     -v ${CADDY_SRV}:${TROJAN_PANEL_WEBFILE} -v ${TROJAN_PANEL_LOGS}:${TROJAN_PANEL_LOGS} -v /etc/localtime:/etc/localtime \
     --restart always trojan-panel && \
     docker network connect trojan-panel-network trojan-panel
+
     if [[ -z $(docker ps -q -f "name=^trojan-panel$") ]]; then
       echo_content skyBlue "---> Trojan Panel后端安装完成"
     else
@@ -679,6 +682,7 @@ EOF
     -v ${NGINX_CONFIG}:/etc/nginx/conf.d/default.conf \
     -v ${CADDY_ACME}"${domain}":${CADDY_ACME}"${domain}" trojan-panel-ui && \
     docker network connect trojan-panel-network trojan-panel-ui
+
     if [[ -z $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
       echo_content skyBlue "---> Trojan Panel前端安装完成"
     else
@@ -907,7 +911,7 @@ install_trojanGO() {
     done
 
     while read -r -p "是否开启多路复用?(false/关闭 true/开启 默认:true/开启): " trojanGO_mux_enable; do
-      if [[ -z "${trojanGO_mux_enable}" ]] || [[ ${trojanGO_mux_enable} == true ]]; then
+      if [[ -z "${trojanGO_mux_enable}" || ${trojanGO_mux_enable} == true ]]; then
         trojanGO_mux_enable=true
         break
       else
@@ -1038,6 +1042,7 @@ install_trojanGO() {
   }
 }
 EOF
+
     docker pull p4gefau1t/trojan-go && \
     docker run -d --name trojan-panel-trojanGO --restart=always \
     -p ${trojanGO_port}:${trojanGO_port} \
@@ -1304,7 +1309,7 @@ EOF
     tobyxdd/hysteria -c /etc/hysteria.json server && \
     docker network connect trojan-panel-network trojan-panel-hysteria
 
-    if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
+    if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
       echo_content skyBlue "---> Hysteria 数据版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "Hysteria节点 数据版 安装成功"
@@ -1330,7 +1335,7 @@ install_hysteria_standalone() {
     echo_content yellow "1. udp(默认)"
     echo_content yellow "2. faketcp"
     read -r -p "请输入Hysteria的模式(默认:1): " selectProtocolType
-    [ -z "${selectProtocolType}" ] && selectProtocolType=1
+    [[ -z "${selectProtocolType}" ]] && selectProtocolType=1
     case ${selectProtocolType} in
     1)
       hysteria_protocol="udp"
@@ -1356,7 +1361,7 @@ install_hysteria_standalone() {
       fi
     done
 
-    cat >"${HYSTERIA_STANDALONE_CONFIG}" <<EOF
+    cat >${HYSTERIA_STANDALONE_CONFIG} <<EOF
 {
   "listen": ":${hysteria_port}",
   "protocol": "${hysteria_protocol}",
@@ -1423,7 +1428,7 @@ update_trojan_panel() {
     fi
   done
 
-  if [[ ${mariadb_ip} == "trojan-panel-mariadb" ]]; then
+  if [[ "${mariadb_ip}" == "trojan-panel-mariadb" ]]; then
     docker exec trojan-panel-mariadb mysql -u"${mariadb_user}" -p"${mariadb_pas}" -e "drop database trojan_panel_db;"
     docker exec trojan-panel-mariadb mysql -u"${mariadb_user}" -p"${mariadb_pas}" -e "create database trojan_panel_db;"
   else
@@ -1454,10 +1459,10 @@ update_trojan_panel() {
   docker cp ${TROJAN_PANEL_UI_UPDATE_DIR} trojan-panel-ui:${TROJAN_PANEL_UI_DATA} && \
   docker restart trojan-panel-ui
 
-  if [[ $? == 0 ]]; then
-    echo_content red "---> Trojan Panel更新失败"
-  else
+  if [[ "$?" == "0" ]]; then
     echo_content skyBlue "---> Trojan Panel更新完成"
+  else
+    echo_content red "---> Trojan Panel更新失败"
   fi
 }
 
