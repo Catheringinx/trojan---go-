@@ -445,7 +445,7 @@ EOF
       fi
     done
 
-    if [[ ! $(lsof -i:80,443 -t) ]]; then
+    if [[ -n $(lsof -i:80,443 -t) ]]; then
       kill -9 "$(lsof -i:80,443 -t)"
     fi
 
@@ -460,7 +460,7 @@ EOF
     abiosoft/caddy:1.0.3 && \
     docker network connect trojan-panel-network trojan-panel-caddy
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-caddy$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-caddy$") ]]; then
       cat >${DOMAIN_FILE} <<EOF
 ${domain}
 EOF
@@ -516,7 +516,7 @@ install_mariadb() {
       docker network connect trojan-panel-network trojan-panel-mariadb
     fi
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-mariadb$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-mariadb$") ]]; then
       echo_content skyBlue "---> MariaDB安装完成"
       echo_content yellow "---> MariaDB root的数据库密码(请妥善保存): ${mariadb_pas}"
       if [[ "${mariadb_user}" != "root" ]]; then
@@ -553,7 +553,7 @@ install_redis() {
     redis-server --requirepass "${redis_pass}" && \
     docker network connect trojan-panel-network trojan-panel-redis
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-redis$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-redis$") ]]; then
       echo_content skyBlue "---> Redis安装完成"
       echo_content yellow "---> Redis的数据库密码(请妥善保存): ${redis_pass}"
     else
@@ -621,7 +621,7 @@ EOF
     trojan-panel && \
     docker network connect trojan-panel-network trojan-panel
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel$") ]]; then
       echo_content skyBlue "---> Trojan Panel后端安装完成"
     else
       echo_content red "---> Trojan Panel后端安装失败"
@@ -694,7 +694,7 @@ EOF
     trojan-panel-ui && \
     docker network connect trojan-panel-network trojan-panel-ui
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-ui$") ]]; then
       echo_content skyBlue "---> Trojan Panel前端安装完成"
     else
       echo_content red "---> Trojan Panel前端安装失败"
@@ -794,7 +794,7 @@ EOF
     trojangfw/trojan && \
     docker network connect trojan-panel-network trojan-panel-trojanGFW
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
       echo_content skyBlue "---> TrojanGFW 数据库版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "TrojanGFW+Caddy+Web+TLS节点 数据库版 安装成功"
@@ -887,7 +887,7 @@ EOF
     trojangfw/trojan && \
     docker network connect trojan-panel-network trojan-panel-trojanGFW
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
       echo_content skyBlue "---> TrojanGFW 单机版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "TrojanGFW+Caddy+Web+TLS节点 单机版 安装成功"
@@ -1066,7 +1066,7 @@ EOF
     p4gefau1t/trojan-go && \
     docker network connect trojan-panel-network trojan-panel-trojanGO
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
       echo_content skyBlue "---> TrojanGO 数据库版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 数据库版 安装成功"
@@ -1249,7 +1249,7 @@ EOF
     p4gefau1t/trojan-go && \
     docker network connect trojan-panel-network trojan-panel-trojanGO-standalone
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
       echo_content skyBlue "---> TrojanGO 单机版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "TrojanGO+Caddy+Web+TLS+Websocket节点 单机版 安装成功"
@@ -1330,7 +1330,7 @@ EOF
     tobyxdd/hysteria -c /etc/hysteria.json server && \
     docker network connect trojan-panel-network trojan-panel-hysteria
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria$") ]]; then
       echo_content skyBlue "---> Hysteria 数据版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "Hysteria节点 数据版 安装成功"
@@ -1402,7 +1402,7 @@ EOF
     tobyxdd/hysteria -c /etc/hysteria.json server && \
     docker network connect trojan-panel-network trojan-panel-hysteria-standalone
 
-    if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
+    if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
       echo_content skyBlue "---> Hysteria 单机版 安装完成"
       echo_content red "\n=============================================================="
       echo_content skyBlue "Hysteria节点 单机版 安装成功"
@@ -1512,7 +1512,7 @@ uninstall_trojan_panel() {
 
 # 卸载TrojanGFW+Caddy+Web+TLS节点 数据库版
 uninstallTrojanGFW() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW$") ]]; then
     echo_content green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 数据库版"
 
     docker rm -f trojan-panel-trojanGFW && \
@@ -1527,7 +1527,7 @@ uninstallTrojanGFW() {
 
 # 卸载TrojanGFW+Caddy+Web+TLS节点 单机版
 uninstallTrojanGFWStandalone() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGFW-standalone$") ]]; then
     echo_content green "---> 卸载TrojanGFW+Caddy+Web+TLS节点 单机版"
 
     docker rm -f trojan-panel-trojanGFW-standalone && \
@@ -1542,7 +1542,7 @@ uninstallTrojanGFWStandalone() {
 
 # 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版
 uninstall_trojanGO() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO$") ]]; then
     echo_content green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 数据库版"
 
     docker rm -f trojan-panel-trojanGO && \
@@ -1557,7 +1557,7 @@ uninstall_trojanGO() {
 
 # 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版
 uninstall_trojanGO_standalone() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-trojanGO-standalone$") ]]; then
     echo_content green "---> 卸载TrojanGo+Caddy+Web+TLS+Websocket节点 单机版"
 
     docker rm -f trojan-panel-trojanGO-standalone && \
@@ -1571,7 +1571,7 @@ uninstall_trojanGO_standalone() {
 }
 
 uninstall_hysteria() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria") ]]; then
     echo_content green "---> 卸载Hysteria节点 数据库版"
 
     docker rm -f trojan-panel-hysteria && \
@@ -1585,7 +1585,7 @@ uninstall_hysteria() {
 }
 
 uninstall_hysteria_standalone() {
-  if [[ -z $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
+  if [[ -n $(docker ps -q -f "name=^trojan-panel-hysteria-standalone$") ]]; then
     echo_content green "---> 卸载Hysteria节点 单机版"
 
     docker rm -f trojan-panel-hysteria-standalone && \
