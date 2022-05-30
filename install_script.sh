@@ -302,10 +302,6 @@ install_dockerUbuntu() {
 
 # 安装Docker
 install_docker() {
-  if [[ "$(firewall-cmd --state)" == "running" ]]; then
-    systemctl stop firewalld.service && systemctl disable firewalld.service
-  fi
-
   if [[ ! $(docker -v 2>/dev/null) ]]; then
     echo_content green "---> 安装Docker"
 
@@ -318,6 +314,11 @@ install_docker() {
     else
       echo_content red "---> 暂不支持该系统"
       exit 0
+    fi
+
+    # 关闭防火墙
+    if [[ "$(firewall-cmd --state 2>/dev/null)" == "running" ]]; then
+      systemctl stop firewalld.service && systemctl disable firewalld.service
     fi
 
     # 时区
